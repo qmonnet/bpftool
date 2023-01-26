@@ -21,7 +21,7 @@ RUN \
 COPY . /src
 RUN cd /src/src && \
 	make clean && \
-	make -j $(nproc)
+	EXTRA_CFLAGS=--static make -j $(nproc)
 
 FROM ubuntu:22.04
 RUN \

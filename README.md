@@ -101,13 +101,12 @@ $ cd src
 $ make V=1
 ```
 
-Additional `CFLAGS` can be passed to the command line if required. For example,
-we can create a static build with the following commands (but note that this
-does not work out-of-the-box when linking with libbfd):
+Additional compilation flags can be passed to the command line if required. For
+example, we can create a static build with the following commands:
 
 ```console
 $ cd src
-$ CFLAGS=--static make
+$ EXTRA_CFLAGS=--static make
 ```
 
 ### Build bpftool's man pages
