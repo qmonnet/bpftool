@@ -23,7 +23,7 @@ RUN \
 COPY . /src
 RUN \
 	make -C /src/src clean && \
-	make -C /src/src -j "$(nproc)"
+	EXTRA_CFLAGS=--static make -C /src/src -j "$(nproc)"
 
 FROM ubuntu:22.04
 RUN \
