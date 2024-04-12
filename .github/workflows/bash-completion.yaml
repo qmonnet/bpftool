@@ -89,10 +89,10 @@ jobs:
       #    sudo bpftool prog list
       #    sudo bpftool map list
 
-      - name: Copy Bash completion files to bash-completion repository
+      - name: Move Bash completion files to bash-completion repository
         run: |
-          cp -t bash-completion/completions/ bpftool/bash-completion/bpftool
-          cp -t bash-completion/test/t/      bpftool/scripts/test_bpftool.py
+          mv -t bash-completion/completions/ bpftool/bash-completion/bpftool
+          mv -t bash-completion/test/t/      bpftool/scripts/test_bpftool.py
           # Shorten timeout (defaults to 30), too long to debug CI
           sed -i '/bash.expect(/,/]$/ s/]$/] , timeout=3/' \
               bash-completion/test/t/conftest.py
