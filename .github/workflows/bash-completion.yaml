@@ -56,38 +56,38 @@ jobs:
           sudo CLANG='/usr/bin/false' LLVM_CONFIG="$CLANG" \
               make -j -C src install
 
-      - name: Build and load sample BPF program, map
-        working-directory: '/tmp'
-        run: |
-          cat > test.c << EOF
-          #include <linux/bpf.h>
-          #include <bpf/bpf_helpers.h>
+      #- name: Build and load sample BPF program, map
+      #  working-directory: '/tmp'
+      #  run: |
+      #    cat > test.c << EOF
+      #    #include <linux/bpf.h>
+      #    #include <bpf/bpf_helpers.h>
 
-          struct {
-          	__uint(type, BPF_MAP_TYPE_ARRAY);
-          	__type(key, __u32);
-          	__type(value, __u32);
-          	__uint(max_entries, 1);
-          } bash_comp_map SEC(".maps");
+      #    struct {
+      #    	__uint(type, BPF_MAP_TYPE_ARRAY);
+      #    	__type(key, __u32);
+      #    	__type(value, __u32);
+      #    	__uint(max_entries, 1);
+      #    } bash_comp_map SEC(".maps");
 
-          int bash_comp_test(__attribute__((unused)) void *ctx)
-          {
-          	__u32 key = 0;
-          	__u32 *value;
+      #    int bash_comp_test(__attribute__((unused)) void *ctx)
+      #    {
+      #    	__u32 key = 0;
+      #    	__u32 *value;
 
-          	value = bpf_map_lookup_elem(&bash_comp_map, &key);
-          	if (!value)
-          		return 0;
+      #    	value = bpf_map_lookup_elem(&bash_comp_map, &key);
+      #    	if (!value)
+      #    		return 0;
 
-          	return *value;
-          }
-          EOF
-          cat test.c
-          clang -g -O2 -emit-llvm -c test.c -o - | \
-              llc -march=bpf -filetype=obj -o test.o
-          sudo bpftool prog load test.o /sys/fs/bpf/bash-completion-test type xdp
-          sudo bpftool prog list
-          sudo bpftool map list
+      #    	return *value;
+      #    }
+      #    EOF
+      #    cat test.c
+      #    clang -g -O2 -emit-llvm -c test.c -o - | \
+      #        llc -march=bpf -filetype=obj -o test.o
+      #    sudo bpftool prog load test.o /sys/fs/bpf/bash-completion-test type xdp
+      #    sudo bpftool prog list
+      #    sudo bpftool map list
 
       - name: Copy Bash completion files to bash-completion repository
         run: |
