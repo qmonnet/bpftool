@@ -287,6 +287,73 @@ char LICENSE[] SEC("license") = "Dual BSD/GPL";
         }
         os.remove(link)
 
+    @pytest.fixture(scope="class")
+    def get_struct_ops(self, bash):
+        if not self.is_root():
+            return { "name": None }
+
+        src_file = "/tmp/bash_comp_struct_ops.c"
+        obj_file = "/tmp/bash_comp_struct_ops.o"
+        rand = random.randint(1000, 9999)
+        struct_ops_name = f"bashc_stop_{rand}"
+        f = open(src_file, "w")
+        f.write(f"""
+#include <linux/bpf.h>
+#include <bpf/bpf_helpers.h>
+#include <bpf/bpf_tracing.h>
+
+void SEC("struct_ops/tcp_empty")
+BPF_PROG(tcp_empty, struct sock *sk)
+{{
+}}
+
+SEC(".struct_ops")
+struct tcp_congestion_ops bash_comp_dummy_struct_ops = {{
+	.init           = (void *)tcp_empty,
+	.name           = "{struct_ops_name}",
+}};
+
+char LICENSE[] SEC("license") = "Dual BSD/GPL";
+""")
+        f.close()
+
+        assert_bash_exec(
+                bash,
+                f"clang -g -O2 -fno-asynchronous-unwind-tables -emit-llvm " \
+                        f"-c {src_file} -o - | " \
+                        f"llc -march=bpf -mcpu=probe -filetype=obj -o {obj_file}",
+        )
+
+        assert_bash_exec(
+                bash,
+                f"bpftool struct_ops register {obj_file}"
+        )
+        struct_ops_map_id = assert_bash_exec(
+                bash,
+                "bpftool struct_ops list | " \
+                        f"sed -n '/^[0-9]\\+: {struct_ops_name} .*/\\1/{{p;q}}'",
+                want_output = True
+        ).strip()
+        try:
+            # May fail, I think when distributing the load to multiple CPUs
+            # there may be several runs of the fixture.
+            os.remove(obj_file)
+            os.remove(src_file)
+        except:
+            pass
+
+        yield {
+                "map_name": struct_ops_name,
+                "map_id": struct_ops_map_id,
+        }
+        try:
+            assert_bash_exec(
+                    bash,
+                    f"bpftool struct_ops unregister name {struct_ops_name}"
+            )
+        except:
+            pass
+
     # bpftool and options
 
     @pytest.mark.complete("bpftool ", require_cmd=True)
@@ -1851,18 +1918,21 @@ char LICENSE[] SEC("license") = "Dual BSD/GPL";
         assert completion == "id name".split()
 
     @pytest.mark.complete("bpftool struct_ops show id ")
-    def test_structops_show_id(self, completion):
-        pytest.skip("Needs a loaded struct_ops map")
+    def test_structops_show_id(self, get_struct_ops, completion):
         assert self.all_ints(completion)
+        struct_ops_id = get_struct_ops["map_id"]
+        if struct_ops_id is not None:
+            assert struct_ops_id in completion
 
     @pytest.mark.complete("bpftool struct_ops show id 1 ")
     def test_structops_show_id_xxx(self, completion):
         assert not completion
 
     @pytest.mark.complete("bpftool struct_ops show name ")
-    def test_structops_name(self, completion):
-        pytest.skip("Needs a loaded struct_ops map")
-        assert completion
+    def test_structops_name(self, get_struct_ops, completion):
+        struct_ops_name = get_struct_ops["map_name"]
+        if struct_ops_name is not None:
+            assert struct_ops_name in completion
 
     @pytest.mark.complete("bpftool struct_ops show name some_name ")
     def test_structops_name_xxx(self, completion):
@@ -1873,18 +1943,21 @@ char LICENSE[] SEC("license") = "Dual BSD/GPL";
         assert completion == "id name".split()
 
     @pytest.mark.complete("bpftool struct_ops dump id ")
-    def test_structops_dump_id(self, completion):
-        pytest.skip("Needs a loaded struct_ops map")
+    def test_structops_dump_id(self, get_struct_ops, completion):
         assert self.all_ints(completion)
+        struct_ops_id = get_struct_ops["map_id"]
+        if struct_ops_id is not None:
+            assert struct_ops_id in completion
 
     @pytest.mark.complete("bpftool struct_ops dump id 1 ")
     def test_structops_dump_id_xxx(self, completion):
         assert not completion
 
     @pytest.mark.complete("bpftool struct_ops dump name ")
-    def test_structops_dump_name(self, completion):
-        pytest.skip("Needs a loaded struct_ops map")
-        assert completion
+    def test_structops_dump_name(self, get_struct_ops, completion):
+        struct_ops_name = get_struct_ops["map_name"]
+        if struct_ops_name is not None:
+            assert struct_ops_name in completion
 
     @pytest.mark.complete("bpftool struct_ops dump name some_name ")
     def test_structops_dump_name_xxx(self, completion):
@@ -1903,18 +1976,21 @@ char LICENSE[] SEC("license") = "Dual BSD/GPL";
         assert completion == "id name".split()
 
     @pytest.mark.complete("bpftool struct_ops unregister id ")
-    def test_structops_unregister_id(self, completion):
-        pytest.skip("Needs a loaded struct_ops map")
+    def test_structops_unregister_id(self, get_struct_ops, completion):
         assert self.all_ints(completion)
+        struct_ops_id = get_struct_ops["map_id"]
+        if struct_ops_id is not None:
+            assert struct_ops_id in completion
 
     @pytest.mark.complete("bpftool struct_ops unregister id 1 ")
     def test_structops_unregister_id_xxx(self, completion):
         assert not completion
 
     @pytest.mark.complete("bpftool struct_ops unregister name ")
-    def test_structops_unregister_name(self, completion):
-        pytest.skip("Needs a loaded struct_ops map")
-        assert completion
+    def test_structops_unregister_name(self, get_struct_ops, completion):
+        struct_ops_name = get_struct_ops["map_name"]
+        if struct_ops_name is not None:
+            assert struct_ops_name in completion
 
     @pytest.mark.complete("bpftool struct_ops unregister name some_name ")
     def test_structops_unregister_name_xxx(self, completion):
