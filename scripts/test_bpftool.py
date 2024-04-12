@@ -80,6 +80,7 @@ class TestBpftool:
     ]
 
     map_types = [
+            "arena",
             "array",
             "array_of_maps",
             "bloom_filter",
@@ -120,18 +121,23 @@ class TestBpftool:
             "cgroup/bind6",
             "cgroup/connect4",
             "cgroup/connect6",
+            "cgroup/connect_unix",
             "cgroup/dev",
             "cgroup/getpeername4",
             "cgroup/getpeername6",
+            "cgroup/getpeername_unix",
             "cgroup/getsockname4",
             "cgroup/getsockname6",
+            "cgroup/getsockname_unix",
             "cgroup/getsockopt",
             "cgroup/post_bind4",
             "cgroup/post_bind6",
             "cgroup/recvmsg4",
             "cgroup/recvmsg6",
+            "cgroup/recvmsg_unix",
             "cgroup/sendmsg4",
             "cgroup/sendmsg6",
+            "cgroup/sendmsg_unix",
             "cgroup/setsockopt",
             "cgroup/skb",
             "cgroup/sock",
@@ -193,6 +199,11 @@ class TestBpftool:
             "cgroup_udp4_sendmsg",
             "cgroup_udp6_recvmsg",
             "cgroup_udp6_sendmsg",
+            "cgroup_unix_connect",
+            "cgroup_unix_getpeername",
+            "cgroup_unix_getsockname",
+            "cgroup_unix_recvmsg",
+            "cgroup_unix_sendmsg",
     ]
 
     # Fixtures
@@ -945,7 +956,7 @@ char LICENSE[] SEC("license") = "Dual BSD/GPL";
 
     @pytest.mark.complete("bpftool map create /some_map ")
     def test_map_create_xxx(self, completion):
-        assert completion == "dev entries flags key name type value".split()
+        assert completion == "entries flags key name offload_dev type value".split()
 
     @pytest.mark.complete("bpftool map create /some_map type ")
     def test_map_create_xxx_type(self, completion):
@@ -953,12 +964,12 @@ char LICENSE[] SEC("license") = "Dual BSD/GPL";
 
     @pytest.mark.complete("bpftool map create /some_map type hash ")
     def test_map_create_xxx_type_xxx(self, completion):
-        assert completion == "dev entries flags key name value".split()
+        assert completion == "entries flags key name offload_dev value".split()
 
     @pytest.mark.complete("bpftool map create /some_map type hash_of_maps ")
     def test_map_create_xxx_type_mom(self, completion):
         """Maps of maps get "inner_map" argument as well"""
-        assert completion == "dev entries flags inner_map key name value".split()
+        assert completion == "entries flags inner_map key name offload_dev value".split()
 
     @pytest.mark.complete("bpftool map create /some_map type hash key ")
     def test_map_create_xxx_type_xxx_key(self, completion):
@@ -967,7 +978,7 @@ char LICENSE[] SEC("license") = "Dual BSD/GPL";
 
     @pytest.mark.complete("bpftool map create /some_map type hash key 4 ")
     def test_map_create_xxx_type_xxx_key_xxx(self, completion):
-        assert completion == "dev entries flags name value".split()
+        assert completion == "entries flags name offload_dev value".split()
 
     @pytest.mark.complete("bpftool map create /some_map type hash key 4 value ")
     def test_map_create_xxx_type_xxx_key_xxx_value(self, completion):
@@ -976,7 +987,7 @@ char LICENSE[] SEC("license") = "Dual BSD/GPL";
 
     @pytest.mark.complete("bpftool map create /some_map type hash key 4 value 4 ")
     def test_map_create_xxx_type_xxx_key_xxx_value_xxx(self, completion):
-        assert completion == "dev entries flags name".split()
+        assert completion == "entries flags name offload_dev".split()
 
     @pytest.mark.complete("bpftool map create /some_map type hash key 4 value 4 entries ")
     def test_map_create_xxx_type_xxx_key_xxx_value_xxx_entries(self, completion):
@@ -984,7 +995,7 @@ char LICENSE[] SEC("license") = "Dual BSD/GPL";
 
     @pytest.mark.complete("bpftool map create /some_map type hash key 4 value 4 entries 64 ")
     def test_map_create_xxx_type_xxx_key_xxx_value_xxx_entries_xxx(self, completion):
-        assert completion == "dev flags name".split()
+        assert completion == "flags name offload_dev".split()
 
     @pytest.mark.complete("bpftool map create /some_map type hash key 4 value 4 entries 64 name ")
     def test_map_create_xxx_type_xxx_key_xxx_value_xxx_entries_xxx_name(self, completion):
@@ -993,12 +1004,12 @@ char LICENSE[] SEC("license") = "Dual BSD/GPL";
 
     @pytest.mark.complete("bpftool map create /some_map type hash key 4 value 4 entries 64 name some_name ")
     def test_map_create_xxx_type_xxx_key_xxx_value_xxx_entries_xxx_name_xxx(self, completion):
-        assert completion == "dev flags".split()
+        assert completion == "flags offload_dev".split()
 
     @pytest.mark.complete("bpftool map create /some_map type hash_of_maps key 4 value 4 entries 64 name some_name ")
     def test_map_create_xxx_type_mom_key_xxx_value_xxx_entries_xxx_name_xxx(self, completion):
         """Maps of maps get "inner_map" argument as well"""
-        assert completion == "dev flags inner_map".split()
+        assert completion == "flags inner_map offload_dev".split()
 
     @pytest.mark.complete("bpftool map create /some_map type hash key 4 value 4 entries 64 name some_name flags ")
     def test_map_create_xxx_type_xxx_key_xxx_value_xxx_entries_xxx_name_xxx_flags(self, completion):
@@ -1006,12 +1017,12 @@ char LICENSE[] SEC("license") = "Dual BSD/GPL";
 
     @pytest.mark.complete("bpftool map create /some_map type hash key 4 value 4 entries 64 name some_name flags 0x0 ")
     def test_map_create_xxx_type_xxx_key_xxx_value_xxx_entries_xxx_name_xxx_flags_any(self, completion):
-        assert completion == "dev"
+        assert completion == "offload_dev"
 
     @pytest.mark.complete("bpftool map create /some_map type hash_of_maps key 4 value 4 entries 64 name some_name flags 0x0 ")
     def test_map_create_xxx_type_mom_key_xxx_value_xxx_entries_xxx_name_xxx_flags_xxx(self, completion):
         """Maps of maps get "inner_map" argument as well"""
-        assert completion == "dev inner_map".split()
+        assert completion == "inner_map offload_dev".split()
 
     @pytest.mark.complete("bpftool map create /some_map type hash_of_maps key 4 value 4 entries 64 name some_name inner_map ")
     def test_map_create_xxx_type_mom_key_xxx_value_xxx_entries_xxx_name_xxx_inner_map(self, completion):
@@ -1023,7 +1034,7 @@ char LICENSE[] SEC("license") = "Dual BSD/GPL";
 
     @pytest.mark.complete("bpftool map create /some_map type hash_of_maps key 4 value 4 entries 64 name some_name inner_map id 1 ")
     def test_map_create_xxx_type_mom_key_xxx_value_xxx_entries_xxx_name_xxx_innermap_id_xxx(self, completion):
-        assert completion == "dev flags".split()
+        assert completion == "flags offload_dev".split()
 
     @pytest.mark.complete("bpftool map create /some_map type hash_of_maps key 4 value 4 entries 64 name some_name inner_map pinned ")
     def test_map_create_xxx_type_mom_key_xxx_value_xxx_entries_xxx_name_xxx_innermap_pinned(self, completion):
@@ -1031,7 +1042,7 @@ char LICENSE[] SEC("license") = "Dual BSD/GPL";
 
     @pytest.mark.complete("bpftool map create /some_map type hash_of_maps key 4 value 4 entries 64 name some_name inner_map pinned /some_map ")
     def test_map_create_xxx_type_mom_key_xxx_value_xxx_entries_xxx_name_xxx_innermap_pinned_xxx(self, completion):
-        assert completion == "dev flags".split()
+        assert completion == "flags offload_dev".split()
 
     @pytest.mark.complete("bpftool map create /some_map type hash_of_maps key 4 value 4 entries 64 name some_name inner_map name ")
     def test_map_create_xxx_type_mom_key_xxx_value_xxx_entries_xxx_name_xxx_innermap_name(self, completion):
@@ -1039,7 +1050,7 @@ char LICENSE[] SEC("license") = "Dual BSD/GPL";
 
     @pytest.mark.complete("bpftool map create /some_map type hash_of_maps key 4 value 4 entries 64 name some_name inner_map name some_name ")
     def test_map_create_xxx_type_mom_key_xxx_value_xxx_entries_xxx_name_xxx_innermap_name_xxx(self, completion):
-        assert completion == "dev flags".split()
+        assert completion == "flags offload_dev".split()
 
     @pytest.mark.complete("bpftool map create /some_map type hash_of_maps key 4 value 4 entries 64 name some_name inner_map name some_name flags ")
     def test_map_create_xxx_type_mom_key_xxx_value_xxx_entries_xxx_name_xxx_innermap_name_xxx_flags(self, completion):
@@ -1047,23 +1058,23 @@ char LICENSE[] SEC("license") = "Dual BSD/GPL";
 
     @pytest.mark.complete("bpftool map create /some_map type hash_of_maps key 4 value 4 entries 64 name some_name inner_map name some_name flags 0x0 ")
     def test_map_create_xxx_type_mom_key_xxx_value_xxx_entries_xxx_name_xxx_innermap_name_xxx_flags_xxx(self, completion):
-        assert completion == "dev"
+        assert completion == "offload_dev"
 
-    @pytest.mark.complete("bpftool map create /some_map type hash key 4 value 4 entries 64 name some_name dev ")
-    def test_map_create_xxx_type_xxx_key_xxx_value_xxx_entries_xxx_name_xxx_dev(self, ifnames, completion):
+    @pytest.mark.complete("bpftool map create /some_map type hash key 4 value 4 entries 64 name some_name offload_dev ")
+    def test_map_create_xxx_type_xxx_key_xxx_value_xxx_entries_xxx_name_xxx_offload_dev(self, ifnames, completion):
         assert all(ifname in completion for ifname in ifnames)
 
-    @pytest.mark.complete("bpftool map create /some_map type hash key 4 value 4 entries 64 name some_name dev some_ifname ")
-    def test_map_create_xxx_type_xxx_key_xxx_value_xxx_entries_xxx_name_xxx_dev_some_ifname(self, completion):
+    @pytest.mark.complete("bpftool map create /some_map type hash key 4 value 4 entries 64 name some_name offload_dev some_ifname ")
+    def test_map_create_xxx_type_xxx_key_xxx_value_xxx_entries_xxx_name_xxx_offload_dev_some_ifname(self, completion):
         assert completion == "flags"
 
-    @pytest.mark.complete("bpftool map create /some_map type hash_of_maps key 4 value 4 entries 64 name some_name dev some_ifname ")
-    def test_map_create_xxx_type_mom_key_xxx_value_xxx_entries_xxx_name_xxx_dev_some_ifname(self, completion):
+    @pytest.mark.complete("bpftool map create /some_map type hash_of_maps key 4 value 4 entries 64 name some_name offload_dev some_ifname ")
+    def test_map_create_xxx_type_mom_key_xxx_value_xxx_entries_xxx_name_xxx_offload_dev_some_ifname(self, completion):
         """Maps of maps get "inner_map" argument as well"""
         assert completion == "flags inner_map".split()
 
-    @pytest.mark.complete("bpftool map create /some_map type hash_of_maps key 4 value 4 entries 64 name some_name dev some_ifname inner_map name some_name flags 0x0 ")
-    def test_map_create_xxx_type_mom_key_xxx_value_xxx_entries_xxx_name_xxx_dev_some_ifname_innermap_name_xxx_flags_xxx(self, completion):
+    @pytest.mark.complete("bpftool map create /some_map type hash_of_maps key 4 value 4 entries 64 name some_name offload_dev some_ifname inner_map name some_name flags 0x0 ")
+    def test_map_create_xxx_type_mom_key_xxx_value_xxx_entries_xxx_name_xxx_offload_dev_some_ifname_innermap_name_xxx_flags_xxx(self, completion):
         assert not completion
 
     @pytest.mark.complete("bpftool map dump ")
@@ -1609,7 +1620,7 @@ char LICENSE[] SEC("license") = "Dual BSD/GPL";
 
     @pytest.mark.complete("bpftool prog load some_objfile /some_path ")
     def test_prog_load_xxx_xxx(self, completion):
-        assert completion == "autoattach dev map pinmaps type".split()
+        assert completion == "autoattach map offload_dev pinmaps type xdpmeta_dev".split()
 
     @pytest.mark.complete("bpftool prog load some_objfile /some_path type ")
     def test_prog_load_xxx_xxx_type(self, completion):
@@ -1617,7 +1628,7 @@ char LICENSE[] SEC("license") = "Dual BSD/GPL";
 
     @pytest.mark.complete("bpftool prog load some_objfile /some_path type xdp ")
     def test_prog_load_xxx_xxx_type_xxx(self, completion):
-        assert completion == "autoattach dev map pinmaps".split()
+        assert completion == "autoattach map offload_dev pinmaps xdpmeta_dev".split()
 
     @pytest.mark.complete("bpftool prog load some_objfile /some_path type xdp map ")
     def test_prog_load_xxx_xxx_type_xxx_map(self, completion):
@@ -1647,7 +1658,7 @@ char LICENSE[] SEC("license") = "Dual BSD/GPL";
     @pytest.mark.complete("bpftool prog load some_objfile /some_path type xdp map name some_name id 1 ")
     def test_prog_load_xxx_xxx_type_xxx_map_name_xxx_id_xxx(self, completion):
         """Parameter "map" can be specified multiple times."""
-        assert completion == "autoattach dev map pinmaps".split()
+        assert completion == "autoattach map offload_dev pinmaps xdpmeta_dev".split()
 
     @pytest.mark.complete("bpftool prog load some_objfile /some_path type xdp map name some_name id 1 map ")
     def test_prog_load_xxx_xxx_type_xxx_map_name_xxx_id_xxx_map(self, completion):
@@ -1675,7 +1686,7 @@ char LICENSE[] SEC("license") = "Dual BSD/GPL";
     @pytest.mark.complete("bpftool prog load some_objfile /some_path type xdp map name some_name id 1 map idx 1 id 1 ")
     def test_prog_load_xxx_xxx_type_xxx_map_name_xxx_id_xxx_map_idx_xxx_id_xxx(self, completion):
         """Parameter "map" can be specified multiple times."""
-        assert completion == "autoattach dev map pinmaps".split()
+        assert completion == "autoattach map offload_dev pinmaps xdpmeta_dev".split()
 
     @pytest.mark.complete("bpftool prog load some_objfile /some_path type xdp map name some_name pinned ")
     def test_prog_load_xxx_xxx_type_xxx_map_name_xxx_pinned(self, completion):
@@ -1684,14 +1695,14 @@ char LICENSE[] SEC("license") = "Dual BSD/GPL";
     @pytest.mark.complete("bpftool prog load some_objfile /some_path type xdp map name some_name pinned /some_map ")
     def test_prog_load_xxx_xxx_type_xxx_map_name_xxx_pinned_xxx(self, completion):
         """Parameter "map" can be specified multiple times."""
-        assert completion == "autoattach dev map pinmaps".split()
+        assert completion == "autoattach map offload_dev pinmaps xdpmeta_dev".split()
 
-    @pytest.mark.complete("bpftool prog load some_objfile /some_path type xdp dev ")
-    def test_prog_load_xxx_xxx_type_xxx_dev(self, ifnames, completion):
+    @pytest.mark.complete("bpftool prog load some_objfile /some_path type xdp offload_dev ")
+    def test_prog_load_xxx_xxx_type_xxx_offload_dev(self, ifnames, completion):
         assert all(ifname in completion for ifname in ifnames)
 
-    @pytest.mark.complete("bpftool prog load some_objfile /some_path type xdp dev some_ifname ")
-    def test_prog_load_xxx_xxx_type_xxx_dev_xxx(self, completion):
+    @pytest.mark.complete("bpftool prog load some_objfile /some_path type xdp offload_dev some_ifname ")
+    def test_prog_load_xxx_xxx_type_xxx_offload_dev_xxx(self, completion):
         assert completion == "autoattach map pinmaps".split()
 
     @pytest.mark.complete("bpftool prog load some_objfile /some_path type xdp pinmaps ")
@@ -1700,34 +1711,43 @@ char LICENSE[] SEC("license") = "Dual BSD/GPL";
 
     @pytest.mark.complete("bpftool prog load some_objfile /some_path type xdp pinmaps /some_dir ")
     def test_prog_load_xxx_xxx_type_xxx_pinmaps_xxx(self, completion):
-        assert completion == "autoattach dev map".split()
+        assert completion == "autoattach map offload_dev xdpmeta_dev".split()
 
     @pytest.mark.complete("bpftool prog load some_objfile /some_path type xdp autoattach ")
     def test_prog_load_xxx_xxx_type_xxx_autoattach(self, completion):
-        assert completion == "dev map pinmaps".split()
+        assert completion == "map offload_dev pinmaps xdpmeta_dev".split()
 
-    @pytest.mark.complete("bpftool prog load some_objfile /some_path type xdp map name some_name pinned /some_map dev ")
-    def test_prog_load_xxx_xxx_type_xxx_map_name_xxx_pinned_xxx_dev(self, ifnames, completion):
+    @pytest.mark.complete("bpftool prog load some_objfile /some_path type xdp map name some_name pinned /some_map offload_dev ")
+    def test_prog_load_xxx_xxx_type_xxx_map_name_xxx_pinned_xxx_offload_dev(self, ifnames, completion):
         assert all(ifname in completion for ifname in ifnames)
 
-    @pytest.mark.complete("bpftool prog load some_objfile /some_path type xdp map name some_name pinned /some_map dev some_ifname ")
-    def test_prog_load_xxx_xxx_type_xxx_map_name_xxx_pinned_xxx_dev_xxx(self, completion):
+    @pytest.mark.complete("bpftool prog load some_objfile /some_path type xdp map name some_name pinned /some_map offload_dev some_ifname ")
+    def test_prog_load_xxx_xxx_type_xxx_map_name_xxx_pinned_xxx_offload_dev_xxx(self, completion):
         """Parameter "map" can be specified multiple times."""
         assert completion == "autoattach map pinmaps".split()
 
-    @pytest.mark.complete("bpftool prog load some_objfile /some_path type xdp map name some_name pinned /some_map dev some_ifname pinmaps ")
-    def test_prog_load_xxx_xxx_type_xxx_map_name_xxx_pinned_xxx_dev_xxx_pinmaps(self, completion):
+    @pytest.mark.complete("bpftool prog load some_objfile /some_path type xdp map name some_name pinned /some_map xdpmeta_dev ")
+    def test_prog_load_xxx_xxx_type_xxx_map_name_xxx_pinned_xxx_xdpmeta_dev(self, ifnames, completion):
+        assert all(ifname in completion for ifname in ifnames)
+
+    @pytest.mark.complete("bpftool prog load some_objfile /some_path type xdp map name some_name pinned /some_map xdpmeta_dev some_ifname ")
+    def test_prog_load_xxx_xxx_type_xxx_map_name_xxx_pinned_xxx_xdpmeta_dev_xxx(self, completion):
+        """Parameter "map" can be specified multiple times."""
+        assert completion == "autoattach map pinmaps".split()
+
+    @pytest.mark.complete("bpftool prog load some_objfile /some_path type xdp map name some_name pinned /some_map offload_dev some_ifname pinmaps ")
+    def test_prog_load_xxx_xxx_type_xxx_map_name_xxx_pinned_xxx_offload_dev_xxx_pinmaps(self, completion):
         assert self.all_paths(completion)
 
-    @pytest.mark.complete("bpftool prog load some_objfile /some_path type xdp map name some_name pinned /some_map dev some_ifname pinmaps /some_dir ")
-    def test_prog_load_xxx_xxx_type_xxx_map_name_xxx_pinned_xxx_dev_xxx_pinmaps_xxx(self, completion):
+    @pytest.mark.complete("bpftool prog load some_objfile /some_path type xdp map name some_name pinned /some_map offload_dev some_ifname pinmaps /some_dir ")
+    def test_prog_load_xxx_xxx_type_xxx_map_name_xxx_pinned_xxx_offload_dev_xxx_pinmaps_xxx(self, completion):
         """Parameter "map" can be specified multiple times."""
         assert completion == "autoattach map".split()
 
-    @pytest.mark.complete("bpftool prog load some_objfile /some_path type xdp map name some_name pinned /some_map dev some_ifname pinmaps /some_dir autoattach ")
-    def test_prog_load_xxx_xxx_type_xxx_map_name_xxx_pinned_xxx_dev_xxx_pinmaps_xxx_autoattach(self, completion):
+    @pytest.mark.complete("bpftool prog load some_objfile /some_path type xdp map name some_name pinned /some_map offload_dev some_ifname pinmaps /some_dir autoattach ")
+    def test_prog_load_xxx_xxx_type_xxx_map_name_xxx_pinned_xxx_offload_dev_xxx_pinmaps_xxx_autoattach(self, completion):
         """Parameter "map" can be specified multiple times."""
-        assert completion == "map"
+        assert completion == "map".split()
 
     @pytest.mark.complete("bpftool prog attach ")
     def test_prog_attach(self, completion):
