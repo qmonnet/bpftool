@@ -1,0 +1,104 @@
+name: bash-completion
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/bash-completion.yaml'
+      - 'bash-completion/bpftool'
+      - 'libbpf/**'
+      - 'src/**'
+  push:
+    branches:
+      - master
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.event.after }}
+  cancel-in-progress: true
+
+jobs:
+  bash-completion:
+    name: Bash completion
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3 # v3.5.0
+        with:
+          path: 'bpftool'
+          submodules: recursive
+
+      - name: Checkout bash-completion repository
+        uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3 # v3.5.0
+        with:
+          repository: 'scop/bash-completion'
+          # Picked the latest commit - it's been too long since v2.11.0 was cut
+          ref: '1d2aac1221a39be866fff0544d0da757544e4d9e'
+          path: 'bash-completion'
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+              libbpf-dev libelf-dev llvm
+
+      - name: Set up Python
+        uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
+        with:
+          python-version: '3.10'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          sudo pip install pytest pytest-xdist psutil
+
+      - name: Build and install bpftool
+        working-directory: 'bpftool'
+        run: |
+          sudo CLANG='/usr/bin/false' LLVM_CONFIG="$CLANG" \
+              make -j -C src install
+
+      - name: Build and load sample BPF program, map
+        working-directory: '/tmp'
+        run: |
+          cat > test.c << EOF
+          #include <linux/bpf.h>
+          #include <bpf/bpf_helpers.h>
+
+          struct {
+          	__uint(type, BPF_MAP_TYPE_ARRAY);
+          	__type(key, __u32);
+          	__type(value, __u32);
+          	__uint(max_entries, 1);
+          } bash_comp_map SEC(".maps");
+
+          int bash_comp_test(__attribute__((unused)) void *ctx)
+          {
+          	__u32 key = 0;
+          	__u32 *value;
+
+          	value = bpf_map_lookup_elem(&bash_comp_map, &key);
+          	if (!value)
+          		return 0;
+
+          	return *value;
+          }
+          EOF
+          cat test.c
+          clang -g -O2 -emit-llvm -c test.c -o - | \
+              llc -march=bpf -filetype=obj -o test.o
+          sudo bpftool prog load test.o /sys/fs/bpf/bash-completion-test type xdp
+          sudo bpftool prog list
+          sudo bpftool map list
+
+      - name: Copy Bash completion files to bash-completion repository
+        run: |
+          cp -t bash-completion/completions/ bpftool/bash-completion/bpftool
+          cp -t bash-completion/test/t/      bpftool/scripts/test_bpftool.py
+          # Shorten timeout (defaults to 30), too long to debug CI
+          sed -i '/bash.expect(/,/]$/ s/]$/] , timeout=3/' \
+              bash-completion/test/t/conftest.py
+
+      - name: Run Bash completion tests
+        working-directory: 'bash-completion'
+        run: |
+          sudo PYTHONDONTWRITEBYTECODE=1 \
+              pytest -n auto --color=yes -vv test/t/test_bpftool.py
