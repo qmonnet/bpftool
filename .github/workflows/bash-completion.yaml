@@ -1,6 +1,11 @@
 name: bash-completion
 
 on:
+  workflow_dispatch:
+    inputs:
+      SHA:
+        description: "SHA under test"
+        required: true
   pull_request:
     paths:
       - '.github/workflows/bash-completion.yaml'
@@ -25,6 +30,7 @@ jobs:
         with:
           path: 'bpftool'
           submodules: recursive
+          ref: ${{ inputs.SHA || github.sha }}
 
       - name: Checkout bash-completion repository
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
