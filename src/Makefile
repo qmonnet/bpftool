@@ -221,7 +221,7 @@ $(OUTPUT)%.bpf.o: skeleton/%.bpf.c $(OUTPUT)vmlinux.h $(LIBBPF_BOOTSTRAP)
 		-I$(or $(OUTPUT),.) \
 		-I$(srctree)/include/uapi/ \
 		-I$(LIBBPF_BOOTSTRAP_INCLUDE) \
-		-g -O2 -Wall -fno-stack-protector \
+		-g -O2 -Wall -fno-stack-protector -std=gnu11 \
 		--target=bpf -c $< -o $@
 	$(Q)$(LLVM_STRIP) -g $@
 
